@@ -1,0 +1,44 @@
+version: '3.8'
+services:
+  db:
+    container_name: postgres
+    image: postgres:alpine3.14
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  auth:
+    container_name: auth
+    build:
+      context: internal/auth
+      dockerfile: docker/auth/Dockerfile
+    environment:
+      HTTP_PORT: 8000
+      DB_DSN: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+  frontend:
+    container_name: frontend
+    build:
+      context: web
+      dockerfile: docker/web/Dockerfile
+    depends_on:
+      - auth
+    environment:
+      HOST: frontend
+      PORT: 3000
+      API_AUTH_HOST: http://auth:8000
+    ports:
+      - "80:3000"
+volumes:
+  pgdata:
+    name: pgdata
+    driver: local

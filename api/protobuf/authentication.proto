@@ -1,0 +1,66 @@
+syntax = "proto3";
+package authentication;
+option go_package = "service/auth/ports";
+
+service AuthenticationService {
+  //  Регистрация учетной записи
+  rpc SignUp(SignUpRequest) returns(StatusResponse);
+  //  Подтверждение регитсрации учетной записи
+  rpc Confirm(TokenRequest) returns(StatusResponse);
+  //  Вход под учетной записи
+  rpc SignIn(SignInRequest) returns (SignInResponse);
+  //  Запрос на сброс пароля
+  rpc ResetPassword(ResetPasswordRequest) returns (StatusResponse);
+  //  Установка нового пароля
+  rpc Recovery(CompleteResetPasswordProcedureRequest) returns (StatusResponse);
+  //  Получение атрибутов учетной записи
+  rpc UserInfo(TokenRequest)returns(UserResponse);
+}
+message SignUpRequest {
+  string Email = 1 ;
+  string FirstName = 2;
+  string SecondName = 3;
+  string Password = 4;
+}
+enum OperationStatus{
+  SUCCESS = 0;
+  CREATED = 1;
+  CONFLICT = 2;
+  WARNING = 3;
+  ERROR = 4;
+  FORBIDDEN = 5;
+}
+message StatusResponse{
+  OperationStatus Status = 1;
+  string Message = 2;
+}
+///////////////////////////////////////////
+message TokenRequest{
+  string Token = 1;
+}
+///////////////////////////////////////////
+message SignInRequest{
+  string Email = 1;
+  string Password = 2;
+}
+message SignInResponse{
+  OperationStatus Status = 1;
+  string AccessToken = 2;
+  string RefreshToken = 3;
+}
+///////////////////////////////////////////
+message ResetPasswordRequest{
+  string Email = 1;
+}
+///////////////////////////////////////////
+message CompleteResetPasswordProcedureRequest{
+  string Token = 1;
+  string Password = 2;
+}
+///////////////////////////////////////////
+message UserResponse{
+  OperationStatus Status = 1;
+  string Username = 2;
+  string Email = 3;
+  repeated string Attributes = 4;
+}

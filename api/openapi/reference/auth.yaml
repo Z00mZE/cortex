@@ -1,0 +1,66 @@
+openapi: 3.0.0
+info:
+  title: Authentication service API
+  version: '1.0'
+  description: API сервиса аутентификации
+  contact:
+    name: Evgeniy Barannikov
+    email: e.a.barannikov@outlook.com
+servers:
+  - url: 'http://localhost:3000/auth'
+paths:
+  /sign-up:
+    post:
+      summary: ''
+      operationId: post-sign-up
+      responses:
+        '201':
+          $ref: '#/components/responses/OperationResult'
+      requestBody:
+        $ref: '#/components/requestBodies/SignUp'
+      description: Эндпоин для запроса создания учетной записи
+components:
+  schemas: {}
+  requestBodies:
+    SignUp:
+      content:
+        application/json:
+          schema:
+            type: object
+            description: Объект регистрации учетной записи
+            properties:
+              email:
+                type: string
+                format: email
+                example: john.dow@examplae.ltd
+                description: Email учетной записи
+              password:
+                type: string
+                minLength: 8
+            required:
+              - email
+              - password
+      description: Тело запрос регистрации учетной записи
+  responses:
+    OperationResult:
+      description: Результат обработки запроса
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+                example: 409
+                description: Код ошибки
+              status:
+                type: string
+                description: Название ошибки
+                example: Конфликт данных
+              description:
+                type: string
+                description: Подробное описание ошибки
+            required:
+              - code
+              - status
+              - description
