@@ -14,10 +14,10 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
   auth:
-    container_name: authentication
+    container_name: auth
     build:
-      context: internal/authentication
-      dockerfile: docker/authentication/Dockerfile
+      context: internal/auth
+      dockerfile: docker/auth/Dockerfile
     environment:
       POSTGRES_HOST: postgres
       POSTGRES_DB: ${POSTGRES_DB}
@@ -31,13 +31,13 @@ services:
     container_name: frontend
     build:
       context: web
-      dockerfile: docker/authentication/Dockerfile
+      dockerfile: docker/auth/Dockerfile
     depends_on:
       - auth
     environment:
       HOST: frontend
       PORT: 3000
-      API_AUTH_HOST: http://authentication:8000
+      API_AUTH_HOST: http://auth:8000
     ports:
       - "80:3000"
 volumes:
