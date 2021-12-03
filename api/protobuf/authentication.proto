@@ -1,6 +1,6 @@
 syntax = "proto3";
 package authentication;
-option go_package = "internal/auth/ports";
+option go_package = "service/auth/ports";
 
 service AuthenticationService {
   //  Регистрация учетной записи

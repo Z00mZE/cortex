@@ -22,7 +22,7 @@ type Server struct {
 }
 
 // New -.
-func New(handler http.Handler, opts ...Option) *Server {
+func NewHttpServer(handler http.Handler, opts ...Option) *Server {
 	httpServer := &http.Server{
 		Handler:      handler,
 		ReadTimeout:  _defaultReadTimeout,
