@@ -13,6 +13,7 @@ type AuthConfig struct {
 	}
 }
 
+//NewAuthConfig	Считываем настройки в структуру из переменных окружения
 func NewAuthConfig() (*AuthConfig, error) {
 	cfg := new(AuthConfig)
 	if readError := envconfig.Process("", cfg); readError != nil {

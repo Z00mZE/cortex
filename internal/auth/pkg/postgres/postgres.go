@@ -1,17 +1,15 @@
-// Package postgres implements postgres connection.
 package postgres
 
 import (
 	"context"
 	"fmt"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
 	"time"
-
-	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 const (
-	_defaultMaxPoolSize  = 1
+	_defaultMaxPoolSize  = 10
 	_defaultConnAttempts = 10
 	_defaultConnTimeout  = time.Second
 )
@@ -21,10 +19,10 @@ type Postgres struct {
 	maxPoolSize  int
 	connAttempts int
 	connTimeout  time.Duration
-	Pool    *pgxpool.Pool
+	Pool         *pgxpool.Pool
 }
 
-// NewPostgres -.
+//NewPostgres -.
 func NewPostgres(url string, opts ...Option) (*Postgres, error) {
 	pg := &Postgres{
 		maxPoolSize:  _defaultMaxPoolSize,
@@ -44,7 +42,7 @@ func NewPostgres(url string, opts ...Option) (*Postgres, error) {
 
 	poolConfig.MaxConns = int32(pg.maxPoolSize)
 
-	for ;pg.connAttempts  > 0;pg.connAttempts-- {
+	for ; pg.connAttempts > 0; pg.connAttempts-- {
 		pg.Pool, err = pgxpool.ConnectConfig(context.Background(), poolConfig)
 		if err == nil {
 			break

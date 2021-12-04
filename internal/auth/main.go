@@ -7,9 +7,12 @@ import (
 )
 
 func main() {
-	config, configError := config.NewAuthConfig()
+	//	получаем настройки
+	configuration, configError := config.NewAuthConfig()
+	//	что-ьл пошло не так, смысла продолжать нет
 	if configError != nil {
 		log.Fatalf("Config error: %s", configError)
 	}
-	app.Run(config)
+	//	запуск сервера приложения
+	app.Run(configuration)
 }
