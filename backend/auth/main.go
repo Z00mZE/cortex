@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/Z00mZE/cortex/internal/auth/config"
-	"github.com/Z00mZE/cortex/internal/auth/internal/app"
+	"github.com/Z00mZE/cortex/backend/auth/config"
+	"github.com/Z00mZE/cortex/backend/auth/internal/app"
 	"github.com/labstack/gommon/log"
 )
 

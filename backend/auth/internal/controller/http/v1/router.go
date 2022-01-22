@@ -3,14 +3,19 @@ package v1
 import (
 	"context"
 	"fmt"
-	"github.com/Z00mZE/cortex/internal/auth/pkg/routing"
+	"github.com/Z00mZE/cortex/backend/auth/pkg/routing"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"net/http"
 )
 
+type UseCaseError interface {
+	StatusCode() int
+	Message() string
+}
+
 type AuthUseCase interface {
-	SignUp(ctx context.Context, email, password string) error
+	SignUp(ctx context.Context, email, password, duplicate string) UseCaseError
 	//Confirm(ctx context.Context, token string) error
 	//SignIn(ctx context.Context, email, password string) (accessToken, refreshToken string, signInError error)
 	//ResetPassword(ctx context.Context, email string) error
@@ -25,9 +30,9 @@ type signUpRequest struct {
 	PasswordDuplicate string `json:"password_duplicate"`
 }
 
-func NewRouter(handler *echo.Echo, useCases AuthUseCase) {
+func NewRouter(app *echo.Echo, useCases AuthUseCase) {
 	routing.BindHttpRouteGroup(
-		handler,
+		app,
 		routing.NewHttpRouteGroup(
 			"/auth/v1",
 			[]routing.IHttpHandler{
@@ -39,9 +44,9 @@ func NewRouter(handler *echo.Echo, useCases AuthUseCase) {
 						if err := ctx.Bind(&req); err != nil {
 							return echo.NewHTTPError(signUpValidationError.Code, signUpValidationError)
 						}
-						err := useCases.SignUp(context.Background(), req.Email, req.Password)
+						err := useCases.SignUp(context.Background(), req.Email, req.Password, req.PasswordDuplicate)
 						fmt.Println("signUp error", err)
-						return ctx.JSON(http.StatusCreated, nil)
+						return ctx.JSON(err.StatusCode(), echo.Map{"message": err.Message()})
 					},
 				),
 			},
