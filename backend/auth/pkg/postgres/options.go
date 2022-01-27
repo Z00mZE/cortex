@@ -1,26 +1,28 @@
 package postgres
 
-import "time"
+import (
+	"database/sql"
+	"github.com/Z00mZE/cortex/backend/auth/ent"
+	"time"
+)
 
-type Option func(*Postgres)
+type Option func(db *sql.DB)
 
 // MaxPoolSize set max pool connections size
-func MaxPoolSize(size int32) Option {
-	return func(c *Postgres) {
-		c.maxPoolSize = size
+func MaxPoolSize(size int) ent.DBOption {
+	return func(c *sql.DB) {
+		c.SetMaxOpenConns(size)
+		c.SetMaxIdleConns(size)
 	}
 }
 
-//	ConnectionAttempts set connection attempts
-func ConnectionAttempts(attempts int) Option {
-	return func(c *Postgres) {
-		c.connectionAttempts = attempts
+func SetConnMaxIdleTime(idleDuration time.Duration) ent.DBOption {
+	return func(db *sql.DB) {
+		db.SetConnMaxIdleTime(idleDuration)
 	}
 }
-
-//	ConnectionAttemptsTimeout set connection attempts timeout
-func ConnectionAttemptsTimeout(timeout time.Duration) Option {
-	return func(c *Postgres) {
-		c.connectionAttemptsTimeout = timeout
+func SetConnMaxLifetime(lifetime time.Duration) ent.DBOption {
+	return func(db *sql.DB) {
+		db.SetConnMaxLifetime(lifetime)
 	}
 }

@@ -16,7 +16,7 @@
 internal/auth
 ```
 
-Код сервиса аутентификации. Из особенностей - работа с БД согласно парадигме [CQRS](https://en.wikipedia.org/wiki/CQRS)
+Код сервиса аутентификации. Из особенностей - работа с ORM [Ent](https://entgo.io/).
 
 ### Frontend
 

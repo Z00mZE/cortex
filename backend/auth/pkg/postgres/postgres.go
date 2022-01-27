@@ -2,67 +2,17 @@ package postgres
 
 import (
 	"context"
-	"fmt"
-	"github.com/jackc/pgx/v4/pgxpool"
-	"log"
-	"time"
+	"github.com/Z00mZE/cortex/backend/auth/ent"
 )
 
-const (
-	defaultMaxPoolSize        = 10
-	defaultConnectionAttempts = 10
-	defaultConnectionTimeout  = time.Second
-)
-
-// Postgres -.
-type Postgres struct {
-	maxPoolSize               int32
-	connectionAttempts        int
-	connectionAttemptsTimeout time.Duration
-	Pool                      *pgxpool.Pool
-}
-
-//NewPostgres -.
-func NewPostgres(url string, opts ...Option) (*Postgres, error) {
-	pg := &Postgres{
-		maxPoolSize:               defaultMaxPoolSize,
-		connectionAttempts:        defaultConnectionAttempts,
-		connectionAttemptsTimeout: defaultConnectionTimeout,
+//NewPostgresORM -.
+func NewPostgresORM(url string, opts ...ent.DBOption) (*ent.Client, error) {
+	orm, ormError := ent.Open(ent.PgPgx, url, opts...)
+	if ormError != nil {
+		return nil, ormError
 	}
-
-	//	Some custom Postgre connection settings
-	for _, opt := range opts {
-		opt(pg)
+	if migrateError := orm.Schema.Create(context.Background()); migrateError != nil {
+		return nil, migrateError
 	}
-
-	poolConfig, err := pgxpool.ParseConfig(url)
-	if err != nil {
-		return nil, fmt.Errorf("postgres - NewPostgres - pgxpool.ParseConfig: %w", err)
-	}
-
-	poolConfig.MaxConns = pg.maxPoolSize
-
-	for ; pg.connectionAttempts > 0; pg.connectionAttempts-- {
-		pg.Pool, err = pgxpool.ConnectConfig(context.Background(), poolConfig)
-		if err == nil {
-			break
-		}
-
-		log.Printf("Postgres is trying to connect, attempts left: %d", pg.connectionAttempts)
-
-		time.Sleep(pg.connectionAttemptsTimeout)
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("postgres - NewPostgres - connectionAttempts == 0: %w", err)
-	}
-
-	return pg, nil
-}
-
-//	Close db connection
-func (p *Postgres) Close() {
-	if p.Pool != nil {
-		p.Pool.Close()
-	}
+	return orm, nil
 }

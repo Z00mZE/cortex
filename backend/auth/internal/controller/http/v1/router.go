@@ -44,7 +44,12 @@ func NewRouter(app *echo.Echo, useCases AuthUseCase) {
 						if err := ctx.Bind(&req); err != nil {
 							return echo.NewHTTPError(signUpValidationError.Code, signUpValidationError)
 						}
-						err := useCases.SignUp(context.Background(), req.Email, req.Password, req.PasswordDuplicate)
+						err := useCases.SignUp(
+							context.Background(),
+							req.Email,
+							req.Password,
+							req.PasswordDuplicate,
+						)
 						fmt.Println("signUp error", err)
 						return ctx.JSON(err.StatusCode(), echo.Map{"message": err.Message()})
 					},

@@ -3,14 +3,26 @@ package app
 import (
 	"fmt"
 	"github.com/Z00mZE/cortex/backend/auth/config"
-	"github.com/Z00mZE/cortex/backend/auth/internal/adapter/postgre"
+	"github.com/Z00mZE/cortex/backend/auth/ent"
 	routesV1 "github.com/Z00mZE/cortex/backend/auth/internal/controller/http/v1"
-	"github.com/Z00mZE/cortex/backend/auth/internal/cqrs/user"
-	"github.com/Z00mZE/cortex/backend/auth/internal/cqrs/user/command"
-	"github.com/Z00mZE/cortex/backend/auth/internal/cqrs/user/query"
+	"github.com/Z00mZE/cortex/backend/auth/pkg/hash"
+	"github.com/Z00mZE/cortex/backend/auth/pkg/mailer"
+	"github.com/Z00mZE/cortex/backend/auth/usecase"
+	"golang.org/x/crypto/bcrypt"
+	"time"
+
+	//"github.com/Z00mZE/cortex/backend/auth/internal/cqrs/user"
+	//"github.com/Z00mZE/cortex/backend/auth/internal/cqrs/user/command"
+	//"github.com/Z00mZE/cortex/backend/auth/internal/cqrs/user/query"
+
+	//"github.com/Z00mZE/cortex/backend/auth/internal/cqrs/user"
+	//"github.com/Z00mZE/cortex/backend/auth/internal/cqrs/user/command"
+	//"github.com/Z00mZE/cortex/backend/auth/internal/cqrs/user/query"
+
+	//"github.com/Z00mZE/cortex/backend/auth/internal/cqrs/user/command"
+	//"github.com/Z00mZE/cortex/backend/auth/internal/cqrs/user/query"
 	"github.com/Z00mZE/cortex/backend/auth/pkg/httpserver"
 	"github.com/Z00mZE/cortex/backend/auth/pkg/postgres"
-	"github.com/Z00mZE/cortex/backend/auth/usecase"
 	"github.com/labstack/echo/v4"
 	"log"
 	"os"
@@ -20,18 +32,28 @@ import (
 
 func Run(cfg *config.AuthConfig) {
 	// Repository
-	pg, err := postgres.NewPostgres(cfg.Database.Host)
+	orm, err := postgres.NewPostgresORM(
+		cfg.Database.Host,
+		postgres.MaxPoolSize(10),
+		postgres.SetConnMaxLifetime(time.Minute*15),
+		postgres.SetConnMaxIdleTime(time.Minute*5),
+	)
 	if err != nil {
-		log.Fatal(fmt.Errorf("app - Run - postgres.NewPostgres: %w", err))
+		log.Fatal(fmt.Errorf("app - Run - postgres.NewPostgresORM: %w", err))
 	}
-	defer pg.Close()
+
+	defer func() {
+		if err := orm.Close(); err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	app := echo.New()
 	httpServer := httpserver.NewHttpServer(app, httpserver.Port(cfg.Http.Port))
 	fmt.Println("Ok")
 
 	//	иницализация роутинга
-	go initRoutes(app, pg)
+	go initRoutes(app, orm)
 
 	// Waiting signal
 	interrupt := make(chan os.Signal, 1)
@@ -53,20 +75,20 @@ func Run(cfg *config.AuthConfig) {
 	}
 }
 
-func initRoutes(app *echo.Echo, pg *postgres.Postgres) {
-	userRepository := postgre.NewUserRepository(pg)
-	routesV1.NewRouter(
-		app,
-		usecase.NewAuthUseCase(
-			user.User{
-				Query: user.Query{
-					IsEmailRegistered:             query.NewIsEmailRegistered(userRepository),
-					FindByEmailAndPasswordHandler: query.NewFindByEmailAndPasswordHandler(userRepository),
-				},
-				Command: user.Command{
-					CreateUserHandler: command.NewCreateUser(userRepository),
-				},
-			},
-		),
+func initRoutes(app *echo.Echo, orm *ent.Client) {
+	authCases, authCasesError := usecase.NewAuthUseCase(
+		hash.NewBCryptHash(bcrypt.MaxCost),
+		mailer.NewDummyMailSender(),
+		orm.User,
+		orm.Session,
 	)
+
+	if authCasesError != nil {
+		fmt.Println("init AuthCases service has error:", authCasesError)
+	} else {
+		routesV1.NewRouter(
+			app,
+			authCases,
+		)
+	}
 }
