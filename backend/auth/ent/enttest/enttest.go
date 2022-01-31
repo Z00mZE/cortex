@@ -24,7 +24,7 @@ type (
 	Option func(*options)
 
 	options struct {
-		opts        []ent.Option
+		opts        []ent.DBOption
 		migrateOpts []schema.MigrateOption
 	}
 )
@@ -43,7 +43,7 @@ func WithMigrateOptions(opts ...schema.MigrateOption) Option {
 	}
 }
 
-func newOptions(opts []Option) *options {
+func newOptions(opts []ent.DBOption) *ent.DBOption {
 	o := &options{}
 	for _, opt := range opts {
 		opt(o)
@@ -52,7 +52,7 @@ func newOptions(opts []Option) *options {
 }
 
 // Open calls ent.Open and auto-run migration.
-func Open(t TestingT, driverName, dataSourceName string, opts ...Option) *ent.Client {
+func Open(t TestingT, driverName, dataSourceName string, opts ...ent.DBOption) *ent.Client {
 	o := newOptions(opts)
 	c, err := ent.Open(driverName, dataSourceName, o.opts...)
 	if err != nil {

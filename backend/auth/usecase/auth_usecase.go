@@ -60,9 +60,11 @@ func (a *AuthUseCase) SignUp(ctx context.Context, email, password, duplicate str
 	}
 
 	hashPass, hashPassError := a.hasher.GenerateFromPassword([]byte(password))
+
 	if hashPassError != nil {
 		return NewAuthUseCaseError(http.StatusInternalServerError, hashPassError.Error())
 	}
+
 	userEntity, userEntitySaveError := a.
 		userClient.
 		Create().
